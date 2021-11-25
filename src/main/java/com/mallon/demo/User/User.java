@@ -1,12 +1,10 @@
 package com.mallon.demo.User;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.util.Objects;
 
 @Entity
+@Table(name = "users")
 public class User {
 
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -14,23 +12,39 @@ public class User {
     private String fullname;
     private String password;
     private String email;
+    private double account;
 
 
-    public User(Long id, String fullname, String password, String email) {
+    public User(Long id, String fullname, String password, String email, double account) {
         this.id = id;
         this.fullname = fullname;
         this.password = password;
         this.email = email;
+        this.account = account;
     }
 
-    public User(String fullname, String password, String email) {
+
+    public User(String fullname, String password, String email, double account) {
         this.fullname = fullname;
         this.password = password;
         this.email = email;
+        this.account = account;
     }
+
 
     public User() {
     }
+
+
+    public double getAccount() {
+        return account;
+    }
+
+
+    public void setAccount(double account) {
+        this.account = account;
+    }
+
 
     public Long getId() {
         return id;

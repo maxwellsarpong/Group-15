@@ -1,12 +1,14 @@
 package com.mallon.demo.User;
 
 
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Validated
 @RestController
-@RequestMapping(path = "api/user/")
+@RequestMapping(path = "/api")
 public class UserController {
 
     private UserService userService;
@@ -17,14 +19,33 @@ public class UserController {
     }
 
     // rest api to get all the users
-    @GetMapping
+    @GetMapping("/user")
     List<User> getUsers(){
         return userService.getUsers();
     }
 
-    @PostMapping
+    // rest api to get a user by id
+    @GetMapping("/user/{id}")
+    User getUserById(@PathVariable Long id){
+        return userService.getUserById(id);
+    }
+
+    // rest api to add a user
+    @PostMapping("/user")
     User addUser(@RequestBody User user){
         return userService.addUser(user);
+    }
+
+    // rest api to update an instance of a user
+    @PutMapping("/user/{id}")
+    User updateUser(@RequestBody User user, @PathVariable Long id){
+        return userService.updateUser(user, id);
+    }
+
+    // rest api to delete a user
+    @DeleteMapping("/user/{id}")
+    void deleteUser(@PathVariable Long id){
+        userService.deleteUser(id);
     }
 
 }
