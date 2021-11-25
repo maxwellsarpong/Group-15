@@ -1,2 +1,9 @@
-package com.mallon.demo.Order;public interface OrderRepository {
+package com.mallon.demo.Order;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Component;
+
+@Component
+public interface OrderRepository extends JpaRepository<Order, Long> {
+
 }
