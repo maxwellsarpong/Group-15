@@ -1,6 +1,7 @@
 package com.mallon.demo.Order;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -13,22 +14,25 @@ public class Order {
     private int quantity;
     private double price;
     private String side;
+    private int cumulatitiveQuantity;
 
 
-    public Order(Long id, String product, int quantity, double price, String side) {
-        this.OrderId= id;
+    public Order(Long orderId, String product, int quantity, double price, String side, int cumulatitiveQuantity) {
+        OrderId = orderId;
         this.product = product;
         this.quantity = quantity;
         this.price = price;
         this.side = side;
+        this.cumulatitiveQuantity = cumulatitiveQuantity;
     }
 
 
-    public Order(String product, int quantity, double price, String side) {
+    public Order(String product, int quantity, double price, String side, int cumulatitiveQuantity) {
         this.product = product;
         this.quantity = quantity;
         this.price = price;
         this.side = side;
+        this.cumulatitiveQuantity = cumulatitiveQuantity;
     }
 
 
@@ -36,12 +40,20 @@ public class Order {
     }
 
 
-    public Long getId() {
+    public int getCumulatitiveQuantity() {
+        return cumulatitiveQuantity;
+    }
+
+    public void setCumulatitiveQuantity(int cumulatitiveQuantity) {
+        this.cumulatitiveQuantity = cumulatitiveQuantity;
+    }
+
+    public Long getOrderId() {
         return OrderId;
     }
 
-    public void setId(Long id) {
-        this.OrderId = id;
+    public void setOrderId(Long orderId) {
+        OrderId = orderId;
     }
 
     public String getProduct() {
@@ -88,5 +100,17 @@ public class Order {
     @Override
     public int hashCode() {
         return Objects.hash(OrderId, product, quantity, price, side);
+    }
+
+    @Override
+    public String toString() {
+        return "Order{" +
+                "OrderId=" + OrderId +
+                ", product='" + product + '\'' +
+                ", quantity=" + quantity +
+                ", price=" + price +
+                ", side='" + side + '\'' +
+                ", cumulatitiveQuantity=" + cumulatitiveQuantity +
+                '}';
     }
 }
