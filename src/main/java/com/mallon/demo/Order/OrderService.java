@@ -1,28 +1,20 @@
 package com.mallon.demo.Order;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.RestTemplate;
-
-import java.net.http.HttpHeaders;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+
 
 @Service
 public class OrderService {
 
     private String exchangeName = "https://exchange.matraining.com";
     private String key = "a8e67540-d3a4-49d6-9800-76837efe24d8";
-
     private OrderRepository orderRepository;
+
 
     @Autowired
     RestTemplate restTemplate;
@@ -40,50 +32,52 @@ public class OrderService {
 
     // create new orders
     String createOrder(@RequestBody Order order) {
-         String exchangeName = "https://exchange.matraining.com";
-         String key = "a8e67540-d3a4-49d6-9800-76837efe24d8";
+            String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
+            orderRepository.save(order);
 
-        String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
-        orderRepository.save(order);
-
-        return orderToken;
-
-        // todo (check if an order already exists)
-        // todo (add tokens to the order table)
-        // todo (validates order)
+            return orderToken;
     }
 
 
-    // localhost:8080/token/order/id
     //get an order by id
    Order getOrderById(@PathVariable String id){
+        try {
+            Order order = restTemplate.getForObject(exchangeName +"/" + key+ "/order/"+ id ,Order.class);
+            return order;
+        } catch (Exception e) {
+            throw e;
+        }
 
-        Order order = restTemplate.getForObject(exchangeName +"/" + key+ "/order/"+ id ,Order.class);
-        System.out.println(order);
-        return order;
-        // todo (check if an order exists with the id)
     }
-
-
 
 
     // delete a single order
-    void deleteOrder(@PathVariable Long id){
-        orderRepository.deleteById(id);
+    boolean deleteOrder(@PathVariable Long id){
+
+        try{
+            orderRepository.deleteById(id);
+            return true;
+        }catch (Exception e) {
+            throw e;
+        }
+
     }
 
 
     // update an order
-    Order updateOrder(@RequestBody Order order, @PathVariable Long id){
-        return orderRepository.findById(id).map(order1 -> {
+    boolean updateOrder(@RequestBody Order order, @PathVariable Long id){
+        orderRepository.findById(id).map(order1 -> {
             order.setPrice(order.getPrice());
             order.setQuantity(order.getQuantity());
 
-            return orderRepository.save(order);
+            orderRepository.save(order);
+            return true;
         }).orElseGet(() -> {
             order.setOrderId(id);
-            return orderRepository.save(order);
+            orderRepository.save(order);
+            return true;
         });
+        return true;
     }
 }
 

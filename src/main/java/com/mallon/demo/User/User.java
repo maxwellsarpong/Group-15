@@ -12,38 +12,33 @@ public class User {
     private String fullname;
     private String password;
     private String email;
-    private double account;
 
 
-    public User(Long id, String fullname, String password, String email, double account) {
+
+    public User(Long id, String fullname, String password, String email) {
         this.id = id;
         this.fullname = fullname;
         this.password = password;
         this.email = email;
-        this.account = account;
     }
 
 
-    public User(String fullname, String password, String email, double account) {
+    public User(String fullname, String password, String email) {
         this.fullname = fullname;
         this.password = password;
         this.email = email;
-        this.account = account;
+
     }
 
 
     public User() {
     }
 
-
-    public double getAccount() {
-        return account;
+    public User(Long id) {
+        this.id = id;
     }
 
 
-    public void setAccount(double account) {
-        this.account = account;
-    }
 
 
     public Long getId() {

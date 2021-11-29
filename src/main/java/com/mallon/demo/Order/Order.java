@@ -1,7 +1,8 @@
 package com.mallon.demo.Order;
 
 import javax.persistence.*;
-import java.util.List;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
 @Entity
@@ -10,9 +11,17 @@ public class Order {
 
     @GeneratedValue(strategy = GenerationType.AUTO)
     private @Id Long OrderId;
+
+    @NotNull
     private String product;
+
+    @Min(value=1, message="quantity must be equal or greater than 1")
     private int quantity;
+
+    @Min(value=1, message="price must be equal or greater than 1")
     private double price;
+
+    @NotNull
     private String side;
     private int cumulatitiveQuantity;
 
