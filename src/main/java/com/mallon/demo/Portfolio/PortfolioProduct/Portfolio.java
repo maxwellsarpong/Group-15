@@ -17,7 +17,6 @@ public class Portfolio {
     private int quantity;
 
     @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
 
