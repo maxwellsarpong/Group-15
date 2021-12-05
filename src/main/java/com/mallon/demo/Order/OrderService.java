@@ -1,10 +1,16 @@
 package com.mallon.demo.Order;
 
+import com.mallon.demo.User.User;
+import com.mallon.demo.User.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.RestTemplate;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.transaction.Transactional;
 import java.util.List;
 
 
@@ -13,11 +19,16 @@ public class OrderService {
 
     private String exchangeName = "https://exchange.matraining.com";
     private String key = "a8e67540-d3a4-49d6-9800-76837efe24d8";
+    @Autowired
     private OrderRepository orderRepository;
 
-
+    @Autowired
+    UserRepository userRepository;
     @Autowired
     RestTemplate restTemplate;
+
+    @PersistenceContext
+    EntityManager entityManager;
 
     @Autowired
     public OrderService(OrderRepository orderRepository) {
@@ -31,11 +42,25 @@ public class OrderService {
 
 
     // create new orders
+    @Transactional
     String createOrder(@RequestBody Order order) {
-            String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
-            orderRepository.save(order);
+            //String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
 
+        try{
+            String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
+            order.setUser(new User(1L));
+            orderRepository.save(order);
+            return "order successfully created. token: " + orderToken;
+        }catch (Exception e) {
+            throw e;
+        }
+
+           /* order.setUser(new User(1l));
+            orderRepository.save(order);
             return orderToken;
+
+            */
+
     }
 
 

@@ -1,8 +1,9 @@
 package com.mallon.demo.Portfolio.PortfolioProduct;
 
 import com.mallon.demo.User.User;
-
 import javax.persistence.*;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
 @Entity
@@ -10,13 +11,18 @@ import java.util.Objects;
 public class Portfolio {
 
 
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private  @Id Long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private @Id Long id;
 
+    @NotNull
     private String product;
+
+
+   @Min(value=0, message="price must be equal or greater than 0")
     private int quantity;
 
-    @OneToOne
+    @ManyToOne
+    @JoinColumn(name = "user_id")
     private User user;
 
 
