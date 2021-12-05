@@ -1,34 +1,38 @@
 package com.mallon.demo.Order;
 
+import com.mallon.demo.Portfolio.PortfolioMoney.Money;
+import com.mallon.demo.Portfolio.PortfolioMoney.MoneyRepository;
+import com.mallon.demo.Portfolio.PortfolioProduct.Portfolio;
+import com.mallon.demo.Portfolio.PortfolioProduct.PortfolioRepository;
 import com.mallon.demo.User.User;
-import com.mallon.demo.User.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.RestTemplate;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
 public class OrderService {
 
     private String exchangeName = "https://exchange.matraining.com";
+    private String exchangeName2 = "https://exchange2.matraining.com";
     private String key = "a8e67540-d3a4-49d6-9800-76837efe24d8";
     @Autowired
     private OrderRepository orderRepository;
 
     @Autowired
-    UserRepository userRepository;
+    MoneyRepository moneyRepository;
+
+    @Autowired
+    PortfolioRepository portfolioRepository;
+
     @Autowired
     RestTemplate restTemplate;
 
-    @PersistenceContext
-    EntityManager entityManager;
 
     @Autowired
     public OrderService(OrderRepository orderRepository) {
@@ -44,24 +48,116 @@ public class OrderService {
     // create new orders
     @Transactional
     String createOrder(@RequestBody Order order) {
-            //String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
+        Money money = moneyRepository.findByUser(new User(1L));
+        List<Portfolio> portfolio = portfolioRepository.findByUser(new User(1L));
+        Optional<Portfolio> item = portfolio.stream().filter(v -> v.getProduct() == "AAPL").findFirst();
+        System.out.println(portfolio);
 
-        try{
-            String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
-            order.setUser(new User(1L));
-            orderRepository.save(order);
-            return "order successfully created. token: " + orderToken;
-        }catch (Exception e) {
-            throw e;
-        }
+        //String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
 
-           /* order.setUser(new User(1l));
-            orderRepository.save(order);
-            return orderToken;
+        /*
+         allow transactions (buy or sell) to go through the exchange
+         only when the user has sufficient money
 
+        */
+            if((money.getMoney() > order.getPrice()) || order.getSide() == "BUY"){
+
+                // allow transactions to go through
+                    switch (order.getSide()){
+                        case "BUY":
+                            if((order.getPrice() > 1.0)){
+                                try{
+                                    String orderToken = restTemplate.postForObject(exchangeName2 +"/" + key+ "/order" ,order,String.class);
+                                    double m = money.getMoney() - order.getPrice();
+                                    money.setMoney(m);
+                                    moneyRepository.save(money);
+                                    order.setUser(new User(1L));
+                                    orderRepository.save(order);
+                                    return "order successfully created on exchange 2. token: " + orderToken;
+                                }catch (Exception e) {
+                                    throw e;
+                                }
+                            }
+
+                            else{
+                                try{
+                                    String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
+                                    double m = money.getMoney() - order.getPrice();
+                                    money.setMoney(m);
+                                    moneyRepository.save(money);
+                                    order.setUser(new User(1L));
+                                    orderRepository.save(order);
+                                    return "order successfully created exchange 1. token: " + orderToken;
+                                }catch (Exception e) {
+                                    throw e;
+                                }
+                            }
+
+                        /*
+
+                         */
+
+                        case "SELL":
+                            System.out.println("hello james");
+                            return "hello sell";
+
+                        default:
+                            System.out.println("hello");
+                            return "hello default";
+                    }
+
+            }
+
+
+            else if(order.getSide() == "SELL")
+            {
+                switch(order.getSide()){
+                    case "SELL":
+                        return "hello";
+                    default:
+                        return "hello from default";
+                }
+            }
+
+
+            else {
+                /*
+                disallow transactions (buying of a stock) to go through the exchange when
+                a user has insufficient funds. alert him/her by a message
+                */
+                return "Insufficient funds to buy this stock. Please try later";
+            }
+
+           /* if((order.getPrice() > 1.0)){
+                try{
+                    String orderToken = restTemplate.postForObject(exchangeName2 +"/" + key+ "/order" ,order,String.class);
+                    double m = money.getMoney() - order.getPrice();
+                    money.setMoney(m);
+                    moneyRepository.save(money);
+                    order.setUser(new User(1L));
+                    orderRepository.save(order);
+                    return "order successfully created on exchange 2. token: " + orderToken;
+                }catch (Exception e) {
+                    throw e;
+                }
+            }else{
+                try{
+                    String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
+                    double m = money.getMoney() - order.getPrice();
+                    money.setMoney(m);
+                    moneyRepository.save(money);
+                    order.setUser(new User(1L));
+                    orderRepository.save(order);
+                    return "order successfully created exchange 1. token: " + orderToken;
+                }catch (Exception e) {
+                    throw e;
+                }
+            }
             */
 
+
     }
+
 
 
     //get an order by id

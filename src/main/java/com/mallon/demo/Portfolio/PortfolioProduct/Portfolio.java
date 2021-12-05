@@ -89,4 +89,5 @@ public class Portfolio {
     public int hashCode() {
         return Objects.hash(id, product, quantity, user);
     }
+
 }
