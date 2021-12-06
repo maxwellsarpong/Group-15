@@ -50,7 +50,8 @@ public class OrderService {
     String createOrder(@RequestBody Order order) {
         Money money = moneyRepository.findByUser(new User(1L));
         List<Portfolio> portfolio = portfolioRepository.findByUser(new User(1L));
-        Optional<Portfolio> item = portfolio.stream().filter(v -> v.getProduct() == "AAPL").findFirst();
+        //Optional<Portfolio> item = portfolio.stream().filter(v -> v.getProduct() == "AAPL").findFirst();
+        Optional <Portfolio> item = portfolio.stream().filter(v->v.getProduct()== order.getProduct()).findFirst();
         System.out.println(portfolio);
 
         //String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
@@ -68,12 +69,22 @@ public class OrderService {
                             if((order.getPrice() > 1.0)){
                                 try{
                                     String orderToken = restTemplate.postForObject(exchangeName2 +"/" + key+ "/order" ,order,String.class);
+
                                     double m = money.getMoney() - totalPurchase;
                                     money.setMoney(m);
                                     moneyRepository.save(money);
+                                    int newQuantity = portfolio.stream().filter(t -> t.getProduct() == order.getProduct()).findFirst().map(Portfolio::getQuantity).orElse(0);
+                                    System.out.println(newQuantity);
+                                    int currentQuantity =  newQuantity + order.getQuantity();
+                                    System.out.println(currentQuantity);
+                                    //TODO
+                                    //update old quantity
+                                    //check stream to enable access to current quantity
+
                                     order.setUser(new User(1L));
                                     orderRepository.save(order);
                                     return "order successfully created on exchange 2. token: " + orderToken;
+
                                 }catch (Exception e) {
                                     throw e;
                                 }
@@ -113,8 +124,8 @@ public class OrderService {
 
             else if(order.getSide() == "SELL")
             {
-                switch(order.getSide()){
-                    case "SELL":
+                switch(order.getProduct()){
+                    case "AAPL":
                         return "hello";
                     default:
                         return "hello from default";
