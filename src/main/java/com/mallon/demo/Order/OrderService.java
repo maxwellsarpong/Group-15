@@ -61,14 +61,14 @@ public class OrderService {
 
         */
             if((money.getMoney() > order.getPrice()) || order.getSide() == "BUY"){
-
+                double totalPurchase = order.getPrice() * order.getQuantity();
                 // allow transactions to go through
                     switch (order.getSide()){
                         case "BUY":
                             if((order.getPrice() > 1.0)){
                                 try{
                                     String orderToken = restTemplate.postForObject(exchangeName2 +"/" + key+ "/order" ,order,String.class);
-                                    double m = money.getMoney() - order.getPrice();
+                                    double m = money.getMoney() - totalPurchase;
                                     money.setMoney(m);
                                     moneyRepository.save(money);
                                     order.setUser(new User(1L));
@@ -82,7 +82,9 @@ public class OrderService {
                             else{
                                 try{
                                     String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
-                                    double m = money.getMoney() - order.getPrice();
+                                   // double totalPurchase = order.getPrice() * order.getQuantity();
+                                    System.out.println(totalPurchase);
+                                    double m = money.getMoney() - totalPurchase;
                                     money.setMoney(m);
                                     moneyRepository.save(money);
                                     order.setUser(new User(1L));
