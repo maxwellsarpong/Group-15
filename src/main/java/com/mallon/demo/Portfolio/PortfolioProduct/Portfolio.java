@@ -90,4 +90,13 @@ public class Portfolio {
         return Objects.hash(id, product, quantity, user);
     }
 
+    @Override
+    public String toString() {
+        return "Portfolio{" +
+                "id=" + id +
+                ", product='" + product + '\'' +
+                ", quantity=" + quantity +
+                ", user=" + user +
+                '}';
+    }
 }

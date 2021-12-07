@@ -13,6 +13,8 @@ import org.springframework.web.client.RestTemplate;
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 
 @Service
@@ -66,16 +68,18 @@ public class OrderService {
                 // allow transactions to go through
                     switch (order.getSide()){
                         case "BUY":
-                            if((order.getPrice() > 1.0)){
+                            if((order.getPrice() >= 1.0)){
                                 try{
                                     String orderToken = restTemplate.postForObject(exchangeName2 +"/" + key+ "/order" ,order,String.class);
 
                                     double m = money.getMoney() - totalPurchase;
                                     money.setMoney(m);
                                     moneyRepository.save(money);
-                                    int newQuantity = portfolio.stream().filter(t -> t.getProduct() == order.getProduct()).findFirst().map(Portfolio::getQuantity).orElse(0);
-                                    System.out.println(newQuantity);
-                                    int currentQuantity =  newQuantity + order.getQuantity();
+
+                                    int userPortfolioQty = portfolio.stream().filter(v -> v.getProduct().startsWith("AAPL")).mapToInt(Portfolio::getQuantity).sum();
+                                    int currentQuantity =  userPortfolioQty+ order.getQuantity();
+
+
                                     System.out.println(currentQuantity);
                                     //TODO
                                     //update old quantity
@@ -92,9 +96,8 @@ public class OrderService {
 
                             else{
                                 try{
-                                    String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
-                                   // double totalPurchase = order.getPrice() * order.getQuantity();
-                                    System.out.println(totalPurchase);
+                                   String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
+
                                     double m = money.getMoney() - totalPurchase;
                                     money.setMoney(m);
                                     moneyRepository.save(money);
