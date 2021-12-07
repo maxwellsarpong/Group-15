@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.RestTemplate;
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -51,12 +52,14 @@ public class OrderService {
     @Transactional
     String createOrder(@RequestBody Order order) {
         Money money = moneyRepository.findByUser(new User(1L));
-        List<Portfolio> portfolio = portfolioRepository.findByUser(new User(1L));
-        //Optional<Portfolio> item = portfolio.stream().filter(v -> v.getProduct() == "AAPL").findFirst();
-        Optional <Portfolio> item = portfolio.stream().filter(v->v.getProduct()== order.getProduct()).findFirst();
-        System.out.println(portfolio);
+        List<Portfolio> portfolioList = portfolioRepository.findByUser(new User(1L));
+        int userPortfolioQty = portfolioList.stream().filter(v -> v.getProduct().startsWith("AAPL")).mapToInt(Portfolio::getQuantity).sum();
+
+
 
         //String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
+
+
 
         /*
          allow transactions (buy or sell) to go through the exchange
@@ -76,14 +79,13 @@ public class OrderService {
                                     money.setMoney(m);
                                     moneyRepository.save(money);
 
-                                    int userPortfolioQty = portfolio.stream().filter(v -> v.getProduct().startsWith("AAPL")).mapToInt(Portfolio::getQuantity).sum();
                                     int currentQuantity =  userPortfolioQty+ order.getQuantity();
+                                    portfolioList.stream()
+                                            .filter(obj->obj.getId()==1)
+                                            .findFirst()
+                                            .ifPresent(o->o.setQuantity(currentQuantity));
 
 
-                                    System.out.println(currentQuantity);
-                                    //TODO
-                                    //update old quantity
-                                    //check stream to enable access to current quantity
 
                                     order.setUser(new User(1L));
                                     orderRepository.save(order);
@@ -101,6 +103,16 @@ public class OrderService {
                                     double m = money.getMoney() - totalPurchase;
                                     money.setMoney(m);
                                     moneyRepository.save(money);
+
+
+                                    int currentQuantity =  userPortfolioQty+ order.getQuantity();
+                                    portfolioList.stream()
+                                            .filter(obj->obj.getId()==1)
+                                            .findFirst()
+                                            .ifPresent(o->o.setQuantity(currentQuantity));
+
+
+
                                     order.setUser(new User(1L));
                                     orderRepository.save(order);
                                     return "order successfully created exchange 1. token: " + orderToken;
