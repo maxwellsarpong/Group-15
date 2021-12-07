@@ -41,11 +41,13 @@ public class OrderController {
         return orderService.getOrderById(id);
     }
 
+
     // rest controller to deleting an order by the id
     @DeleteMapping("/order/{id}")
     boolean deleteOrder(@PathVariable Long id){
          return orderService.deleteOrder(id);
     }
+
 
     //rest controller to update an order
     @PutMapping("/order/{id}")
@@ -54,13 +56,4 @@ public class OrderController {
     }
 
 
-
-    /*RestTemplate rest = new RestTemplate();
-    String url = "https://jsonplaceholder.typicode.com/posts?userId=1";
-    ResponseEntity<Post[]> entity = rest.getForEntity(url, Post[].class);
-    Post[] posts = entity.getBody();
-
-     */
-
-    //
 }

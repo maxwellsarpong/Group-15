@@ -1,5 +1,8 @@
 package com.mallon.demo.User;
 
+import com.mallon.demo.Portfolio.PortfolioMoney.Money;
+import com.mallon.demo.Portfolio.PortfolioProduct.Portfolio;
+
 import javax.persistence.*;
 import java.util.Objects;
 
@@ -12,6 +15,12 @@ public class User {
     private String fullname;
     private String password;
     private String email;
+
+    @OneToOne(mappedBy = "user")
+    private Money money;
+
+    @OneToOne(mappedBy = "user")
+    private Portfolio portfolio;
 
 
 
