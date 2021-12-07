@@ -53,11 +53,10 @@ public class OrderService {
     String createOrder(@RequestBody Order order) {
         Money money = moneyRepository.findByUser(new User(1L));
         List<Portfolio> portfolioList = portfolioRepository.findByUser(new User(1L));
-        int userPortfolioQty = portfolioList.stream().filter(v -> v.getProduct().startsWith("AAPL")).mapToInt(Portfolio::getQuantity).sum();
+        Optional<Portfolio> product = portfolioList.stream().filter(v -> v.getProduct().equals(order.getProduct())).findFirst();
+        int userPortfolioQty = portfolioList.stream().filter(v -> v.getProduct().equals(order.getProduct())).mapToInt(Portfolio::getQuantity).sum();
+        Long itemId = portfolioList.stream().filter(obj->obj.getProduct().equals(order.getProduct())).mapToLong(Portfolio::getId).sum();
 
-
-
-        //String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
 
 
 
@@ -79,14 +78,30 @@ public class OrderService {
                                     money.setMoney(m);
                                     moneyRepository.save(money);
 
-                                    int currentQuantity =  userPortfolioQty+ order.getQuantity();
-                                    portfolioList.stream()
-                                            .filter(obj->obj.getId()==1)
-                                            .findFirst()
-                                            .ifPresent(o->o.setQuantity(currentQuantity));
+                                    /*
+                                        checks to see if the client
+                                        already has the stock in his portfolio
+                                        if he owns it, then increase the quantity
+                                        if not create the stock
+                                    */
+
+                                     if(product.isPresent()){
+
+                                        int currentQuantity =  userPortfolioQty+ order.getQuantity();
+                                        portfolioList.stream()
+                                                .filter(obj->obj.getId()== itemId)
+                                                .findFirst()
+                                                .ifPresent(o->o.setQuantity(currentQuantity));
+                                    }
 
 
+                                    else if(!product.isPresent()){
+                                        Portfolio p = new Portfolio(order.getProduct(),order.getQuantity(),new User(1l));
+                                        portfolioRepository.save(p);
 
+                                    }
+
+                                    //save the order which has been placed into the database
                                     order.setUser(new User(1L));
                                     orderRepository.save(order);
                                     return "order successfully created on exchange 2. token: " + orderToken;
@@ -104,15 +119,30 @@ public class OrderService {
                                     money.setMoney(m);
                                     moneyRepository.save(money);
 
+                                     /*
+                                        checks to see if the client
+                                        already has the stock in his portfolio
+                                        if he owns it, then increase the quantity
+                                        if not create the stock
+                                    */
 
-                                    int currentQuantity =  userPortfolioQty+ order.getQuantity();
-                                    portfolioList.stream()
-                                            .filter(obj->obj.getId()==1)
-                                            .findFirst()
-                                            .ifPresent(o->o.setQuantity(currentQuantity));
+                                    if(product.isPresent()){
+
+                                        int currentQuantity =  userPortfolioQty+ order.getQuantity();
+                                        portfolioList.stream()
+                                                .filter(obj->obj.getId()== itemId)
+                                                .findFirst()
+                                                .ifPresent(o->o.setQuantity(currentQuantity));
+                                    }
 
 
+                                    else if(!product.isPresent()){
+                                        Portfolio p = new Portfolio(order.getProduct(),order.getQuantity(),new User(1l));
+                                        portfolioRepository.save(p);
 
+                                    }
+
+                                    //save the order which has been placed into the database
                                     order.setUser(new User(1L));
                                     orderRepository.save(order);
                                     return "order successfully created exchange 1. token: " + orderToken;
@@ -156,32 +186,7 @@ public class OrderService {
                 return "Insufficient funds to buy this stock. Please try later";
             }
 
-           /* if((order.getPrice() > 1.0)){
-                try{
-                    String orderToken = restTemplate.postForObject(exchangeName2 +"/" + key+ "/order" ,order,String.class);
-                    double m = money.getMoney() - order.getPrice();
-                    money.setMoney(m);
-                    moneyRepository.save(money);
-                    order.setUser(new User(1L));
-                    orderRepository.save(order);
-                    return "order successfully created on exchange 2. token: " + orderToken;
-                }catch (Exception e) {
-                    throw e;
-                }
-            }else{
-                try{
-                    String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
-                    double m = money.getMoney() - order.getPrice();
-                    money.setMoney(m);
-                    moneyRepository.save(money);
-                    order.setUser(new User(1L));
-                    orderRepository.save(order);
-                    return "order successfully created exchange 1. token: " + orderToken;
-                }catch (Exception e) {
-                    throw e;
-                }
-            }
-            */
+
 
 
     }
