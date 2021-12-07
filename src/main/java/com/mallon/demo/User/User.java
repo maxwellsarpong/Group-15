@@ -1,39 +1,57 @@
 package com.mallon.demo.User;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.mallon.demo.Order.Order;
 import com.mallon.demo.Portfolio.PortfolioMoney.Money;
 import com.mallon.demo.Portfolio.PortfolioProduct.Portfolio;
 
 import javax.persistence.*;
+import javax.validation.constraints.Email;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
 @Table(name = "users")
 public class User {
 
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private @Id Long id;
     private String fullname;
+    private String username;
     private String password;
+
+    @Email
     private String email;
 
     @OneToOne(mappedBy = "user")
     private Money money;
 
-    @OneToOne(mappedBy = "user")
-    private Portfolio portfolio;
+    @OneToMany(mappedBy = "user", fetch=FetchType.EAGER)
+    private List<Portfolio> portfolio = new ArrayList<Portfolio>();
 
 
+    @OneToMany(mappedBy = "user")
+    private List<Order> order = new ArrayList<Order>();
 
-    public User(Long id, String fullname, String password, String email) {
+
+    public User(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
+
+    public User(Long id, String fullname, String username, String password, String email) {
         this.id = id;
         this.fullname = fullname;
+        this.username = username;
         this.password = password;
         this.email = email;
     }
 
 
-    public User(String fullname, String password, String email) {
+    public User(String fullname, String password, String username,String email) {
         this.fullname = fullname;
+        this.username = username;
         this.password = password;
         this.email = email;
 
@@ -47,7 +65,8 @@ public class User {
         this.id = id;
     }
 
-
+    public <T> User(String username, String password, List<T> emptyList) {
+    }
 
 
     public Long getId() {
@@ -82,6 +101,13 @@ public class User {
         this.email = email;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
     @Override
     public boolean equals(Object o) {

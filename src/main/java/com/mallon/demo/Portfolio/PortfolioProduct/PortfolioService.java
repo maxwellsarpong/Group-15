@@ -20,8 +20,9 @@ public class PortfolioService {
 
     //method to create a portfolio product
     String createPortfolio(@RequestBody Portfolio portfolio){
+
         try{
-            portfolio.setUser(new User(2L));
+            portfolio.setUser(new User(1L));
             portfolioRepository.save(portfolio);
             return "portfolio successfully created";
         }catch (Exception e) {

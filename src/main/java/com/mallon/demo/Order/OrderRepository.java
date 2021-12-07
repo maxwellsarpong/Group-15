@@ -8,7 +8,7 @@ import java.util.Optional;
 @Component
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    Optional<Order> getOrderByProduct(String product);
-    Optional<Order> getOrderByQuantity(int quantity);
+    //Optional<Order> getOrderByProduct(String product);
+    //Optional<Order> getOrderByQuantity(int quantity);
 
 }

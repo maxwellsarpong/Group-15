@@ -1,6 +1,8 @@
 package com.mallon.demo.User;
 
 
+import com.mallon.demo.Auth.AuthRequest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,6 +48,14 @@ public class UserController {
     @DeleteMapping("/user/{id}")
     void deleteUser(@PathVariable Long id){
         userService.deleteUser(id);
+    }
+
+
+    //rest to log in
+    @PostMapping("/user/login")
+    ResponseEntity<?> createAuthToken(@RequestBody AuthRequest authRequest) throws Exception{
+        System.out.println(userService.createAuthToken(authRequest));
+        return userService.createAuthToken(authRequest);
     }
 
 }

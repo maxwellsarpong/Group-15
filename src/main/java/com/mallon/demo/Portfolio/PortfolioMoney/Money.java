@@ -9,11 +9,12 @@ import java.util.Objects;
 @Table(name = "portfolio_money")
 public class Money {
 
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private  @Id Long id;
     private double money;
 
     @OneToOne
+    @JoinColumn(name = "user_id")
     private User user;
 
     public Money(Long id, double money, User user) {

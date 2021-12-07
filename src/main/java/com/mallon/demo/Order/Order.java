@@ -1,60 +1,66 @@
 package com.mallon.demo.Order;
 
+import com.mallon.demo.User.User;
+
 import javax.persistence.*;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 import java.util.Objects;
+import java.util.Optional;
 
 @Entity
 @Table(name = "orders")
 public class Order {
 
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private @Id Long OrderId;
 
-    @NotNull
+    //@NotNull
     private String product;
 
-    @Min(value=1, message="quantity must be equal or greater than 1")
+    //@Min(value=1, message="quantity must be equal or greater than 1")
     private int quantity;
 
-    @Min(value=1, message="price must be equal or greater than 1")
+    //@Min(value=1, message="price must be equal or greater than 1")
     private double price;
 
-    @NotNull
+    //@NotNull
     private String side;
-    private int cumulatitiveQuantity;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
 
-    public Order(Long orderId, String product, int quantity, double price, String side, int cumulatitiveQuantity) {
+
+
+
+    public Order(Long orderId, String product, int quantity, double price, String side, User user) {
         OrderId = orderId;
         this.product = product;
         this.quantity = quantity;
         this.price = price;
         this.side = side;
-        this.cumulatitiveQuantity = cumulatitiveQuantity;
+        this.user = user;
     }
 
 
-    public Order(String product, int quantity, double price, String side, int cumulatitiveQuantity) {
+    public Order(String product, int quantity, double price, String side, User user) {
         this.product = product;
         this.quantity = quantity;
         this.price = price;
         this.side = side;
-        this.cumulatitiveQuantity = cumulatitiveQuantity;
+        this.user = user;
     }
 
 
     public Order() {
     }
 
-
-    public int getCumulatitiveQuantity() {
-        return cumulatitiveQuantity;
+    public User getUser() {
+        return user;
     }
 
-    public void setCumulatitiveQuantity(int cumulatitiveQuantity) {
-        this.cumulatitiveQuantity = cumulatitiveQuantity;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public Long getOrderId() {
@@ -119,7 +125,6 @@ public class Order {
                 ", quantity=" + quantity +
                 ", price=" + price +
                 ", side='" + side + '\'' +
-                ", cumulatitiveQuantity=" + cumulatitiveQuantity +
                 '}';
     }
 }

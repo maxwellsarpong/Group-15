@@ -1,23 +1,41 @@
 package com.mallon.demo.Order;
 
+import com.mallon.demo.Portfolio.PortfolioMoney.Money;
+import com.mallon.demo.Portfolio.PortfolioMoney.MoneyRepository;
+import com.mallon.demo.Portfolio.PortfolioProduct.Portfolio;
+import com.mallon.demo.Portfolio.PortfolioProduct.PortfolioRepository;
+import com.mallon.demo.User.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.RestTemplate;
+import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 
 @Service
 public class OrderService {
 
     private String exchangeName = "https://exchange.matraining.com";
+    private String exchangeName2 = "https://exchange2.matraining.com";
     private String key = "a8e67540-d3a4-49d6-9800-76837efe24d8";
+    @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    MoneyRepository moneyRepository;
+
+    @Autowired
+    PortfolioRepository portfolioRepository;
 
     @Autowired
     RestTemplate restTemplate;
+
 
     @Autowired
     public OrderService(OrderRepository orderRepository) {
@@ -31,12 +49,148 @@ public class OrderService {
 
 
     // create new orders
+    @Transactional
     String createOrder(@RequestBody Order order) {
-            String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
-            orderRepository.save(order);
+        Money money = moneyRepository.findByUser(new User(1L));
+        List<Portfolio> portfolioList = portfolioRepository.findByUser(new User(1L));
+        Optional<Portfolio> product = portfolioList.stream().filter(v -> v.getProduct().equals(order.getProduct())).findFirst();
+        int userPortfolioQty = portfolioList.stream().filter(v -> v.getProduct().equals(order.getProduct())).mapToInt(Portfolio::getQuantity).sum();
+        Long itemId = portfolioList.stream().filter(obj->obj.getProduct().equals(order.getProduct())).mapToLong(Portfolio::getId).sum();
 
-            return orderToken;
+
+
+
+        /*
+         allow transactions (buy or sell) to go through the exchange
+         only when the user has sufficient money
+
+        */
+            if((money.getMoney() > order.getPrice()) || order.getSide() == "BUY"){
+                double totalPurchase = order.getPrice() * order.getQuantity();
+                // allow transactions to go through
+                    switch (order.getSide()){
+                        case "BUY":
+                            if((order.getPrice() >= 1.0)){
+                                try{
+                                    String orderToken = restTemplate.postForObject(exchangeName2 +"/" + key+ "/order" ,order,String.class);
+
+                                    double m = money.getMoney() - totalPurchase;
+                                    money.setMoney(m);
+                                    moneyRepository.save(money);
+
+                                    /*
+                                        checks to see if the client
+                                        already has the stock in his portfolio
+                                        if he owns it, then increase the quantity
+                                        if not create the stock
+                                    */
+
+                                     if(product.isPresent()){
+
+                                        int currentQuantity =  userPortfolioQty+ order.getQuantity();
+                                        portfolioList.stream()
+                                                .filter(obj->obj.getId()== itemId)
+                                                .findFirst()
+                                                .ifPresent(o->o.setQuantity(currentQuantity));
+                                    }
+
+
+                                    else if(!product.isPresent()){
+                                        Portfolio p = new Portfolio(order.getProduct(),order.getQuantity(),new User(1l));
+                                        portfolioRepository.save(p);
+
+                                    }
+
+                                    //save the order which has been placed into the database
+                                    order.setUser(new User(1L));
+                                    orderRepository.save(order);
+                                    return "order successfully created on exchange 2. token: " + orderToken;
+
+                                }catch (Exception e) {
+                                    throw e;
+                                }
+                            }
+
+                            else{
+                                try{
+                                   String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
+
+                                    double m = money.getMoney() - totalPurchase;
+                                    money.setMoney(m);
+                                    moneyRepository.save(money);
+
+                                     /*
+                                        checks to see if the client
+                                        already has the stock in his portfolio
+                                        if he owns it, then increase the quantity
+                                        if not create the stock
+                                    */
+
+                                    if(product.isPresent()){
+
+                                        int currentQuantity =  userPortfolioQty+ order.getQuantity();
+                                        portfolioList.stream()
+                                                .filter(obj->obj.getId()== itemId)
+                                                .findFirst()
+                                                .ifPresent(o->o.setQuantity(currentQuantity));
+                                    }
+
+
+                                    else if(!product.isPresent()){
+                                        Portfolio p = new Portfolio(order.getProduct(),order.getQuantity(),new User(1l));
+                                        portfolioRepository.save(p);
+
+                                    }
+
+                                    //save the order which has been placed into the database
+                                    order.setUser(new User(1L));
+                                    orderRepository.save(order);
+                                    return "order successfully created exchange 1. token: " + orderToken;
+                                }catch (Exception e) {
+                                    throw e;
+                                }
+                            }
+
+                        /*
+
+                         */
+
+                        case "SELL":
+                            System.out.println("hello james");
+                            return "hello sell";
+
+                        default:
+                            System.out.println("hello");
+                            return "hello default";
+                    }
+
+            }
+
+
+            else if(order.getSide() == "SELL")
+            {
+                switch(order.getProduct()){
+                    case "AAPL":
+                        return "hello";
+                    default:
+                        return "hello from default";
+                }
+            }
+
+
+            else {
+                /*
+                disallow transactions (buying of a stock) to go through the exchange when
+                a user has insufficient funds. alert him/her by a message
+                */
+                return "Insufficient funds to buy this stock. Please try later";
+            }
+
+
+
+
     }
+
 
 
     //get an order by id
