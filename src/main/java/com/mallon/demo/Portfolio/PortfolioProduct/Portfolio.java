@@ -21,7 +21,7 @@ public class Portfolio {
    @Min(value=0, message="price must be equal or greater than 0")
     private int quantity;
 
-    @ManyToOne
+    @ManyToOne()
     @JoinColumn(name = "user_id")
     private User user;
 
