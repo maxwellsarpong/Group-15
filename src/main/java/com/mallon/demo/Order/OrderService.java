@@ -58,6 +58,7 @@ public class OrderService {
         double costPrice = order.getPrice() * order.getQuantity();
         double sellingPrice = order.getPrice() * order.getQuantity();
 
+
         /*
          allow transactions (buy or sell) to go through the exchange
          only when the user has sufficient money
