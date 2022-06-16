@@ -36,7 +36,6 @@ public class OrderService {
     @Autowired
     RestTemplate restTemplate;
 
-
     @Autowired
     public OrderService(OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
@@ -47,7 +46,6 @@ public class OrderService {
         return orderRepository.findAll();
     }
 
-
     // create new orders
     @Transactional
     String createOrder(@RequestBody Order order) {
@@ -57,7 +55,8 @@ public class OrderService {
         int userPortfolioQty = portfolioList.stream().filter(v -> v.getProduct().equals(order.getProduct())).mapToInt(Portfolio::getQuantity).sum();
         Long itemId = portfolioList.stream().filter(obj->obj.getProduct().equals(order.getProduct())).mapToLong(Portfolio::getId).sum();
 
-
+        double costPrice = order.getPrice() * order.getQuantity();
+        double sellingPrice = order.getPrice() * order.getQuantity();
 
 
         /*
@@ -65,18 +64,19 @@ public class OrderService {
          only when the user has sufficient money
 
         */
-            if((money.getMoney() > order.getPrice()) || order.getSide() == "BUY"){
-                double totalPurchase = order.getPrice() * order.getQuantity();
+
+                //double totalPurchase = order.getPrice() * order.getQuantity();
                 // allow transactions to go through
                     switch (order.getSide()){
                         case "BUY":
-                            if((order.getPrice() >= 1.0)){
-                                try{
-                                    String orderToken = restTemplate.postForObject(exchangeName2 +"/" + key+ "/order" ,order,String.class);
+                            if(money.getMoney() > costPrice){
+                                if((order.getPrice() >= 1.0)){
+                                    try{
+                                        String orderToken = restTemplate.postForObject(exchangeName2 +"/" + key+ "/order" ,order,String.class);
 
-                                    double m = money.getMoney() - totalPurchase;
-                                    money.setMoney(m);
-                                    moneyRepository.save(money);
+                                        double m = money.getMoney() - costPrice;
+                                        money.setMoney(m);
+                                        moneyRepository.save(money);
 
                                     /*
                                         checks to see if the client
@@ -85,39 +85,38 @@ public class OrderService {
                                         if not create the stock
                                     */
 
-                                     if(product.isPresent()){
+                                        if(product.isPresent()){
 
-                                        int currentQuantity =  userPortfolioQty+ order.getQuantity();
-                                        portfolioList.stream()
-                                                .filter(obj->obj.getId()== itemId)
-                                                .findFirst()
-                                                .ifPresent(o->o.setQuantity(currentQuantity));
+                                            int currentQuantity =  userPortfolioQty+ order.getQuantity();
+                                            portfolioList.stream()
+                                                    .filter(obj->obj.getId()== itemId)
+                                                    .findFirst()
+                                                    .ifPresent(o->o.setQuantity(currentQuantity));
+                                        }
+
+                                        else if(!product.isPresent()){
+                                            Portfolio p = new Portfolio(order.getProduct(),order.getQuantity(),new User(1l));
+                                            portfolioRepository.save(p);
+
+                                        }
+
+                                        //save the order which has been placed into the database
+                                        order.setUser(new User(1L));
+                                        orderRepository.save(order);
+                                        return "order successfully created on exchange 2. token: " + orderToken;
+
+                                    }catch (Exception e) {
+                                        throw e;
                                     }
-
-
-                                    else if(!product.isPresent()){
-                                        Portfolio p = new Portfolio(order.getProduct(),order.getQuantity(),new User(1l));
-                                        portfolioRepository.save(p);
-
-                                    }
-
-                                    //save the order which has been placed into the database
-                                    order.setUser(new User(1L));
-                                    orderRepository.save(order);
-                                    return "order successfully created on exchange 2. token: " + orderToken;
-
-                                }catch (Exception e) {
-                                    throw e;
                                 }
-                            }
 
-                            else{
-                                try{
-                                   String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
+                                else{
+                                    try{
+                                        String orderToken = restTemplate.postForObject(exchangeName +"/" + key+ "/order" ,order,String.class);
 
-                                    double m = money.getMoney() - totalPurchase;
-                                    money.setMoney(m);
-                                    moneyRepository.save(money);
+                                        double m = money.getMoney() - costPrice;
+                                        money.setMoney(m);
+                                        moneyRepository.save(money);
 
                                      /*
                                         checks to see if the client
@@ -126,68 +125,54 @@ public class OrderService {
                                         if not create the stock
                                     */
 
-                                    if(product.isPresent()){
+                                        if(product.isPresent()){
 
-                                        int currentQuantity =  userPortfolioQty+ order.getQuantity();
-                                        portfolioList.stream()
-                                                .filter(obj->obj.getId()== itemId)
-                                                .findFirst()
-                                                .ifPresent(o->o.setQuantity(currentQuantity));
+                                            int currentQuantity =  userPortfolioQty+ order.getQuantity();
+                                            portfolioList.stream()
+                                                    .filter(obj->obj.getId()== itemId)
+                                                    .findFirst()
+                                                    .ifPresent(o->o.setQuantity(currentQuantity));
+                                        }
+
+                                        else if(!product.isPresent()){
+                                            Portfolio p = new Portfolio(order.getProduct(),order.getQuantity(),new User(1l));
+                                            portfolioRepository.save(p);
+
+                                        }
+
+                                        //save the order which has been placed into the database
+                                        order.setUser(new User(1L));
+                                        orderRepository.save(order);
+                                        return "order successfully created on exchange 1. token: " + orderToken;
+                                    }catch (Exception e) {
+                                        throw e;
                                     }
-
-
-                                    else if(!product.isPresent()){
-                                        Portfolio p = new Portfolio(order.getProduct(),order.getQuantity(),new User(1l));
-                                        portfolioRepository.save(p);
-
-                                    }
-
-                                    //save the order which has been placed into the database
-                                    order.setUser(new User(1L));
-                                    orderRepository.save(order);
-                                    return "order successfully created exchange 1. token: " + orderToken;
-                                }catch (Exception e) {
-                                    throw e;
                                 }
+                            }else{
+                                return "Insufficient funds to buy this stock. Please try later";
                             }
 
-                        /*
-
-                         */
-
                         case "SELL":
-                            System.out.println("hello james");
-                            return "hello sell";
+                            if((product.isPresent()) && (userPortfolioQty >= order.getQuantity())){
+                                String orderToken = restTemplate.postForObject(exchangeName2 +"/" + key+ "/order" ,order,String.class);
+                                int currentQty = userPortfolioQty - order.getQuantity();
+                                portfolioList.stream()
+                                        .filter(obj->obj.getId()== itemId)
+                                        .findFirst()
+                                        .ifPresent(o->o.setQuantity(currentQty));
+
+                                double m = money.getMoney() + sellingPrice;
+                                money.setMoney(m);
+                                moneyRepository.save(money);
+
+                                return "item successfully sold. item token: " + orderToken;
+                            }else{
+                                return "Sorry, transaction failed. Insufficient quantity or unavailable product";
+                            }
 
                         default:
-                            System.out.println("hello");
-                            return "hello default";
+                            return "please specify your side";
                     }
-
-            }
-
-
-            else if(order.getSide() == "SELL")
-            {
-                switch(order.getProduct()){
-                    case "AAPL":
-                        return "hello";
-                    default:
-                        return "hello from default";
-                }
-            }
-
-
-            else {
-                /*
-                disallow transactions (buying of a stock) to go through the exchange when
-                a user has insufficient funds. alert him/her by a message
-                */
-                return "Insufficient funds to buy this stock. Please try later";
-            }
-
-
-
 
     }
 
